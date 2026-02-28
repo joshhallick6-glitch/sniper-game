@@ -33,6 +33,9 @@ export class SceneManager {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB);
 
+        // Camera must be in the scene tree so its children (e.g. gun model) are rendered
+        this.scene.add(this.camera);
+
         // Fog for distance fade
         this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.008);
 
