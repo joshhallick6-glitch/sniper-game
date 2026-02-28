@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNIPER ELITE ONLINE</title>
+    <link rel="stylesheet" href="/css/lobby.css">
+</head>
+<body>
+    <div class="scanline-overlay"></div>
+
+    <div class="lobby-container">
+        <!-- Title -->
+        <header class="lobby-header">
+            <div class="title-accent"></div>
+            <h1 class="game-title">SNIPER ELITE<span class="title-online">ONLINE</span></h1>
+            <p class="tagline">ONE SHOT. ONE KILL.</p>
+            <div class="title-accent"></div>
+        </header>
+
+        <!-- Lobby Card -->
+        <main class="lobby-card">
+            <!-- Username Section -->
+            <div class="input-group" id="username-section">
+                <label for="username-input" class="input-label">CALLSIGN</label>
+                <input
+                    type="text"
+                    id="username-input"
+                    class="text-input"
+                    placeholder="Enter your callsign..."
+                    maxlength="16"
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group" id="action-buttons">
+                <button class="btn btn-create" id="btn-create">
+                    <span class="btn-icon">+</span>
+                    CREATE GAME
+                </button>
+                <div class="btn-divider">
+                    <span>OR</span>
+                </div>
+                <button class="btn btn-join" id="btn-join">
+                    <span class="btn-icon">&gt;</span>
+                    JOIN GAME
+                </button>
+            </div>
+
+            <!-- Room Code Input (hidden by default, shown when JOIN is clicked) -->
+            <div class="input-group hidden" id="join-section">
+                <label for="room-code-input" class="input-label">ROOM CODE</label>
+                <div class="room-code-input-wrapper">
+                    <input
+                        type="text"
+                        id="room-code-input"
+                        class="text-input room-code-field"
+                        placeholder="XXXX"
+                        maxlength="4"
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <button class="btn btn-confirm" id="btn-confirm-join">
+                        DEPLOY
+                    </button>
+                </div>
+                <button class="btn-back" id="btn-back">&larr; Back</button>
+            </div>
+
+            <!-- Room Code Display (shown after creating a room) -->
+            <div class="room-display hidden" id="room-display">
+                <p class="room-display-label">SHARE THIS CODE</p>
+                <div class="room-code-box">
+                    <span id="room-code-value">----</span>
+                </div>
+                <p class="room-display-hint">Give this code to your opponent</p>
+            </div>
+
+            <!-- Status Area -->
+            <div class="status-area hidden" id="status-area">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text" id="status-text">Connecting...</span>
+                </div>
+            </div>
+
+            <!-- Player List (shown when in a room) -->
+            <div class="player-list hidden" id="player-list">
+                <div class="player-slot" id="player-1">
+                    <span class="player-icon">&#9678;</span>
+                    <span class="player-name" id="player-1-name">---</span>
+                    <span class="player-ready">READY</span>
+                </div>
+                <div class="player-slot waiting" id="player-2">
+                    <span class="player-icon">&#9678;</span>
+                    <span class="player-name" id="player-2-name">Waiting...</span>
+                    <span class="player-status-dots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="lobby-footer">
+            <span class="connection-badge" id="connection-badge">
+                <span class="conn-dot"></span>
+                <span id="conn-text">OFFLINE</span>
+            </span>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/lobby.js"></script>
+</body>
+</html>

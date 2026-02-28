@@ -1,0 +1,461 @@
+/* ========================================
+   GAME HUD STYLES - Sniper Elite
+   ======================================== */
+
+/* Reset & Canvas */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Courier New', monospace;
+    cursor: none;
+}
+
+#game-canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+#hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ========================================
+   CROSSHAIR
+   ======================================== */
+#crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    z-index: 20;
+}
+
+.crosshair-line {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.crosshair-top {
+    width: 2px;
+    height: 10px;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.crosshair-bottom {
+    width: 2px;
+    height: 10px;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+}
+
+.crosshair-left {
+    width: 10px;
+    height: 2px;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.crosshair-right {
+    width: 10px;
+    height: 2px;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.crosshair-dot {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: rgba(255, 255, 255, 1);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ========================================
+   SCOPE OVERLAY
+   ======================================== */
+#scope-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 15;
+}
+
+#scope-overlay.scoped {
+    display: block;
+}
+
+.scope-vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at center,
+        transparent 25%,
+        rgba(0, 0, 0, 0.3) 40%,
+        rgba(0, 0, 0, 0.7) 55%,
+        rgba(0, 0, 0, 0.95) 65%,
+        #000 70%
+    );
+}
+
+.scope-line {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.scope-line.scope-h {
+    width: 100%;
+    height: 1px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.scope-line.scope-v {
+    width: 1px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* ========================================
+   HEALTH BAR
+   ======================================== */
+#health-container {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#health-bar {
+    width: 200px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+#health-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, #ff4444, #44ff44);
+    transition: width 0.3s ease;
+}
+
+#health-text {
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* ========================================
+   AMMO COUNTER
+   ======================================== */
+#ammo-container {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+#ammo-current {
+    font-size: 48px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+#ammo-separator {
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 2px;
+}
+
+#ammo-max {
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#reload-indicator {
+    font-size: 16px;
+    color: #ffcc00;
+    position: absolute;
+    top: -25px;
+    right: 0;
+    animation: reload-blink 0.6s ease-in-out infinite;
+}
+
+@keyframes reload-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ========================================
+   KILL COUNTER
+   ======================================== */
+#kill-counter {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 22px;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 16px;
+    border-radius: 4px;
+}
+
+/* ========================================
+   KILL FEED
+   ======================================== */
+#kill-feed {
+    position: absolute;
+    top: 60px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 300px;
+}
+
+.kill-feed-message {
+    color: #fff;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 3px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    animation: kill-feed-fade 5s ease-out forwards;
+    white-space: nowrap;
+    border-left: 3px solid #ff4444;
+}
+
+@keyframes kill-feed-fade {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    80% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+}
+
+/* ========================================
+   HIT MARKER
+   ======================================== */
+#hit-marker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    display: none;
+    z-index: 25;
+}
+
+#hit-marker.show {
+    display: block;
+    animation: hit-flash 0.2s ease-out forwards;
+}
+
+.hit-line {
+    position: absolute;
+    width: 8px;
+    height: 2px;
+    background: #fff;
+}
+
+.hit-line.hit-tl {
+    top: 3px;
+    left: 3px;
+    transform: rotate(-45deg);
+}
+
+.hit-line.hit-tr {
+    top: 3px;
+    right: 3px;
+    transform: rotate(45deg);
+}
+
+.hit-line.hit-bl {
+    bottom: 3px;
+    left: 3px;
+    transform: rotate(45deg);
+}
+
+.hit-line.hit-br {
+    bottom: 3px;
+    right: 3px;
+    transform: rotate(-45deg);
+}
+
+@keyframes hit-flash {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.3);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* ========================================
+   DEATH SCREEN
+   ======================================== */
+#death-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(180, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    pointer-events: auto;
+}
+
+.death-content {
+    text-align: center;
+    color: #fff;
+}
+
+.death-content h1 {
+    font-size: 72px;
+    font-weight: bold;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+    color: #ff2222;
+    letter-spacing: 8px;
+    margin-bottom: 20px;
+    animation: death-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes death-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+#death-killer {
+    font-size: 22px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    margin-bottom: 16px;
+}
+
+#killer-name {
+    color: #ff6666;
+    font-weight: bold;
+}
+
+#respawn-timer {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#respawn-countdown {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* ========================================
+   CLICK TO PLAY OVERLAY
+   ======================================== */
+#click-to-play {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.click-to-play-content {
+    text-align: center;
+    color: #fff;
+}
+
+.click-to-play-content h2 {
+    font-size: 48px;
+    letter-spacing: 6px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.click-to-play-content p {
+    font-size: 24px;
+    animation: click-pulse 2s ease-in-out infinite;
+    margin-bottom: 30px;
+}
+
+@keyframes click-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.controls-hint {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+}

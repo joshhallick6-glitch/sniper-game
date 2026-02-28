@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sniper Elite - Game</title>
+    <link rel="stylesheet" href="/css/game.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD Overlay -->
+    <div id="hud">
+        <!-- Crosshair -->
+        <div id="crosshair">
+            <div class="crosshair-line crosshair-top"></div>
+            <div class="crosshair-line crosshair-bottom"></div>
+            <div class="crosshair-line crosshair-left"></div>
+            <div class="crosshair-line crosshair-right"></div>
+            <div class="crosshair-dot"></div>
+        </div>
+
+        <!-- Scope overlay -->
+        <div id="scope-overlay">
+            <div class="scope-vignette"></div>
+            <div class="scope-line scope-h"></div>
+            <div class="scope-line scope-v"></div>
+        </div>
+
+        <!-- Hit marker -->
+        <div id="hit-marker">
+            <div class="hit-line hit-tl"></div>
+            <div class="hit-line hit-tr"></div>
+            <div class="hit-line hit-bl"></div>
+            <div class="hit-line hit-br"></div>
+        </div>
+
+        <!-- Health bar -->
+        <div id="health-container">
+            <div id="health-bar">
+                <div id="health-fill"></div>
+            </div>
+            <span id="health-text">100</span>
+        </div>
+
+        <!-- Ammo counter -->
+        <div id="ammo-container">
+            <span id="ammo-current">5</span>
+            <span id="ammo-separator">/</span>
+            <span id="ammo-max">5</span>
+            <span id="reload-indicator" class="hidden">RELOADING...</span>
+        </div>
+
+        <!-- Kill counter -->
+        <div id="kill-counter">
+            <span id="kills">0</span> K / <span id="deaths">0</span> D
+        </div>
+
+        <!-- Kill feed -->
+        <div id="kill-feed"></div>
+
+        <!-- Death screen -->
+        <div id="death-screen" class="hidden">
+            <div class="death-content">
+                <h1>YOU DIED</h1>
+                <p id="death-killer">Killed by: <span id="killer-name"></span></p>
+                <p id="respawn-timer">Respawning in <span id="respawn-countdown">5</span>...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Click to play overlay -->
+    <div id="click-to-play">
+        <div class="click-to-play-content">
+            <h2>SNIPER ELITE</h2>
+            <p>Click to Play</p>
+            <div class="controls-hint">
+                <span>WASD - Move</span>
+                <span>SHIFT - Sprint</span>
+                <span>LMB - Shoot</span>
+                <span>RMB - Scope</span>
+                <span>R - Reload</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/js/game/main.js"></script>
+</body>
+</html>
