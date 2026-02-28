@@ -7,15 +7,525 @@ import { MAP_SIZE } from './constants.js';
 // returns collider boxes for physics
 // ========================================
 
-// Material palette
+// ---- Procedural Canvas Texture Generators ----
+
+/**
+ * Create a THREE.CanvasTexture from a drawing function.
+ * @param {number} width - Canvas width in pixels
+ * @param {number} height - Canvas height in pixels
+ * @param {Function} drawFn - function(ctx, width, height) that draws the pattern
+ * @param {number} repeatX - Texture repeat in U direction
+ * @param {number} repeatY - Texture repeat in V direction
+ * @returns {THREE.CanvasTexture}
+ */
+function createCanvasTexture(width, height, drawFn, repeatX = 1, repeatY = 1) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    drawFn(ctx, width, height);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(repeatX, repeatY);
+    return texture;
+}
+
+/** Seeded-ish random helper for texture variation */
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function randInt(min, max) {
+    return Math.floor(rand(min, max + 1));
+}
+
+// --- Ground texture: olive/grass with natural variation ---
+function drawGroundTexture(ctx, w, h) {
+    // Base olive-green fill
+    ctx.fillStyle = '#4a5d23';
+    ctx.fillRect(0, 0, w, h);
+
+    // Large soft patches of color variation
+    for (let i = 0; i < 30; i++) {
+        const px = rand(0, w);
+        const py = rand(0, h);
+        const radius = rand(20, 80);
+        const gradient = ctx.createRadialGradient(px, py, 0, px, py, radius);
+        const shade = randInt(60, 100);
+        const green = randInt(80, 130);
+        gradient.addColorStop(0, `rgba(${shade}, ${green}, ${randInt(20, 50)}, 0.3)`);
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    // Many small darker green dots
+    for (let i = 0; i < 800; i++) {
+        const x = rand(0, w);
+        const y = rand(0, h);
+        const size = rand(1, 4);
+        ctx.fillStyle = `rgba(${randInt(30, 60)}, ${randInt(50, 80)}, ${randInt(10, 30)}, ${rand(0.3, 0.7)})`;
+        ctx.fillRect(x, y, size, size);
+    }
+
+    // Lighter green highlights
+    for (let i = 0; i < 400; i++) {
+        const x = rand(0, w);
+        const y = rand(0, h);
+        const size = rand(1, 3);
+        ctx.fillStyle = `rgba(${randInt(80, 120)}, ${randInt(110, 160)}, ${randInt(30, 60)}, ${rand(0.2, 0.5)})`;
+        ctx.fillRect(x, y, size, size);
+    }
+
+    // Tiny brown specks (dirt)
+    for (let i = 0; i < 150; i++) {
+        const x = rand(0, w);
+        const y = rand(0, h);
+        const size = rand(1, 3);
+        ctx.fillStyle = `rgba(${randInt(80, 120)}, ${randInt(60, 80)}, ${randInt(20, 40)}, ${rand(0.3, 0.6)})`;
+        ctx.fillRect(x, y, size, size);
+    }
+
+    // Very fine grass-like strokes
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 300; i++) {
+        const x = rand(0, w);
+        const y = rand(0, h);
+        ctx.strokeStyle = `rgba(${randInt(50, 80)}, ${randInt(70, 110)}, ${randInt(15, 40)}, ${rand(0.15, 0.35)})`;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + rand(-3, 3), y + rand(-6, -1));
+        ctx.stroke();
+    }
+}
+
+// --- Building texture: gray concrete with panels and cracks ---
+function drawBuildingTexture(ctx, w, h) {
+    // Base gray
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(0, 0, w, h);
+
+    // Subtle random noise across entire surface
+    for (let i = 0; i < 2000; i++) {
+        const x = rand(0, w);
+        const y = rand(0, h);
+        const val = randInt(100, 150);
+        ctx.fillStyle = `rgba(${val}, ${val}, ${val}, ${rand(0.05, 0.15)})`;
+        ctx.fillRect(x, y, rand(1, 3), rand(1, 3));
+    }
+
+    // Panel rectangles (lighter and darker patches)
+    for (let i = 0; i < 12; i++) {
+        const px = rand(0, w - 40);
+        const py = rand(0, h - 30);
+        const pw = rand(30, 80);
+        const ph = rand(20, 60);
+        const val = randInt(115, 145);
+        ctx.fillStyle = `rgba(${val}, ${val}, ${val}, ${rand(0.15, 0.3)})`;
+        ctx.fillRect(px, py, pw, ph);
+    }
+
+    // Darker panel patches
+    for (let i = 0; i < 8; i++) {
+        const px = rand(0, w - 30);
+        const py = rand(0, h - 20);
+        const pw = rand(20, 60);
+        const ph = rand(15, 40);
+        const val = randInt(70, 95);
+        ctx.fillStyle = `rgba(${val}, ${val}, ${val}, ${rand(0.1, 0.25)})`;
+        ctx.fillRect(px, py, pw, ph);
+    }
+
+    // Thin darker cracks
+    ctx.strokeStyle = 'rgba(60, 60, 60, 0.3)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        let cx = rand(0, w);
+        let cy = rand(0, h);
+        ctx.moveTo(cx, cy);
+        const segments = randInt(3, 7);
+        for (let s = 0; s < segments; s++) {
+            cx += rand(-15, 15);
+            cy += rand(5, 20);
+            ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+    }
+
+    // Stain/water marks
+    for (let i = 0; i < 5; i++) {
+        const sx = rand(0, w);
+        const sy = rand(0, h);
+        const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, rand(10, 30));
+        gradient.addColorStop(0, 'rgba(70, 70, 65, 0.15)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+    }
+}
+
+// --- Wall texture: brick pattern with mortar lines ---
+function drawWallTexture(ctx, w, h) {
+    // Mortar base color
+    ctx.fillStyle = '#b0a898';
+    ctx.fillRect(0, 0, w, h);
+
+    const brickH = 16;
+    const brickW = 32;
+    const mortarSize = 2;
+    const brickColors = ['#8B4513', '#7A3B10', '#9C5424', '#6E3410', '#A0522D', '#8A4820', '#7E4018'];
+
+    const rows = Math.ceil(h / (brickH + mortarSize));
+    const cols = Math.ceil(w / (brickW + mortarSize)) + 1;
+
+    for (let row = 0; row < rows; row++) {
+        const offsetX = (row % 2 === 0) ? 0 : -(brickW / 2 + mortarSize / 2);
+        const y = row * (brickH + mortarSize);
+
+        for (let col = 0; col < cols; col++) {
+            const x = col * (brickW + mortarSize) + offsetX;
+
+            // Base brick color with variation
+            const baseColor = brickColors[randInt(0, brickColors.length - 1)];
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(x, y, brickW, brickH);
+
+            // Subtle color variation within each brick
+            for (let v = 0; v < 5; v++) {
+                const vx = x + rand(0, brickW - 5);
+                const vy = y + rand(0, brickH - 3);
+                const val = randInt(80, 140);
+                ctx.fillStyle = `rgba(${val}, ${Math.floor(val * 0.6)}, ${Math.floor(val * 0.3)}, ${rand(0.05, 0.15)})`;
+                ctx.fillRect(vx, vy, rand(3, 10), rand(2, 5));
+            }
+
+            // Fine noise on brick surface
+            for (let n = 0; n < 8; n++) {
+                const nx = x + rand(0, brickW);
+                const ny = y + rand(0, brickH);
+                ctx.fillStyle = `rgba(0, 0, 0, ${rand(0.03, 0.1)})`;
+                ctx.fillRect(nx, ny, 1, 1);
+            }
+        }
+    }
+
+    // Redraw mortar lines on top to clean up any overlap
+    ctx.fillStyle = '#b0a898';
+    for (let row = 0; row <= rows; row++) {
+        const y = row * (brickH + mortarSize) - mortarSize / 2;
+        ctx.fillRect(0, y, w, mortarSize);
+    }
+    for (let row = 0; row < rows; row++) {
+        const offsetX = (row % 2 === 0) ? 0 : -(brickW / 2 + mortarSize / 2);
+        const y = row * (brickH + mortarSize);
+        for (let col = 0; col <= cols; col++) {
+            const x = col * (brickW + mortarSize) + offsetX - mortarSize / 2;
+            ctx.fillRect(x, y, mortarSize, brickH);
+        }
+    }
+}
+
+// --- Crate texture: wood planks with grain ---
+function drawCrateTexture(ctx, w, h) {
+    // Base wood color
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(0, 0, w, h);
+
+    const plankCount = 6;
+    const plankW = w / plankCount;
+    const plankColors = ['#7A3B10', '#8B4513', '#9C5424', '#6E3410', '#845020', '#7E4218'];
+
+    // Draw vertical planks
+    for (let i = 0; i < plankCount; i++) {
+        const x = i * plankW;
+        ctx.fillStyle = plankColors[i % plankColors.length];
+        ctx.fillRect(x, 0, plankW, h);
+
+        // Vertical grain lines within each plank
+        for (let g = 0; g < 8; g++) {
+            const gx = x + rand(2, plankW - 2);
+            ctx.strokeStyle = `rgba(${randInt(40, 80)}, ${randInt(20, 50)}, ${randInt(5, 20)}, ${rand(0.15, 0.4)})`;
+            ctx.lineWidth = rand(0.5, 1.5);
+            ctx.beginPath();
+            let gy = rand(0, h * 0.2);
+            ctx.moveTo(gx, gy);
+            while (gy < h) {
+                gy += rand(5, 20);
+                ctx.lineTo(gx + rand(-1.5, 1.5), gy);
+            }
+            ctx.stroke();
+        }
+
+        // Divider line between planks
+        ctx.fillStyle = 'rgba(40, 20, 5, 0.5)';
+        ctx.fillRect(x, 0, 1.5, h);
+    }
+
+    // Horizontal plank divisions (2-3 cross boards)
+    const crossBoards = [h * 0.15, h * 0.5, h * 0.85];
+    for (const cy of crossBoards) {
+        ctx.fillStyle = `rgb(${randInt(90, 110)}, ${randInt(50, 70)}, ${randInt(15, 30)})`;
+        ctx.fillRect(0, cy - 6, w, 12);
+        // Edge lines
+        ctx.fillStyle = 'rgba(30, 15, 5, 0.6)';
+        ctx.fillRect(0, cy - 6, w, 1.5);
+        ctx.fillRect(0, cy + 5, w, 1.5);
+        // Grain on cross board
+        for (let g = 0; g < 12; g++) {
+            const gx = rand(0, w);
+            ctx.strokeStyle = `rgba(50, 30, 10, ${rand(0.15, 0.3)})`;
+            ctx.lineWidth = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(gx, cy - 5);
+            ctx.lineTo(gx + rand(-2, 2), cy + 5);
+            ctx.stroke();
+        }
+    }
+
+    // Wood knots
+    for (let k = 0; k < 4; k++) {
+        const kx = rand(10, w - 10);
+        const ky = rand(10, h - 10);
+        const kr = rand(3, 7);
+        const gradient = ctx.createRadialGradient(kx, ky, 0, kx, ky, kr);
+        gradient.addColorStop(0, 'rgba(50, 25, 8, 0.6)');
+        gradient.addColorStop(0.5, 'rgba(70, 35, 12, 0.3)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.ellipse(kx, ky, kr, kr * 1.3, rand(0, Math.PI), 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Fine noise
+    for (let i = 0; i < 500; i++) {
+        const nx = rand(0, w);
+        const ny = rand(0, h);
+        ctx.fillStyle = `rgba(${randInt(30, 70)}, ${randInt(15, 40)}, ${randInt(5, 15)}, ${rand(0.03, 0.1)})`;
+        ctx.fillRect(nx, ny, 1, 1);
+    }
+}
+
+// --- Platform texture: diamond plate metal ---
+function drawPlatformTexture(ctx, w, h) {
+    // Base gray metal
+    ctx.fillStyle = '#696969';
+    ctx.fillRect(0, 0, w, h);
+
+    // Subtle metallic gradient sheen
+    const sheen = ctx.createLinearGradient(0, 0, w, h);
+    sheen.addColorStop(0, 'rgba(130, 130, 130, 0.15)');
+    sheen.addColorStop(0.5, 'rgba(80, 80, 80, 0.1)');
+    sheen.addColorStop(1, 'rgba(120, 120, 120, 0.15)');
+    ctx.fillStyle = sheen;
+    ctx.fillRect(0, 0, w, h);
+
+    // Diamond pattern grid
+    const diamondSpacing = 16;
+    const diamondSize = 5;
+
+    for (let row = 0; row < Math.ceil(h / diamondSpacing) + 1; row++) {
+        for (let col = 0; col < Math.ceil(w / diamondSpacing) + 1; col++) {
+            const offsetX = (row % 2 === 0) ? 0 : diamondSpacing / 2;
+            const cx = col * diamondSpacing + offsetX;
+            const cy = row * diamondSpacing;
+
+            // Raised diamond shape
+            ctx.fillStyle = 'rgba(140, 140, 140, 0.5)';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - diamondSize);
+            ctx.lineTo(cx + diamondSize, cy);
+            ctx.lineTo(cx, cy + diamondSize);
+            ctx.lineTo(cx - diamondSize, cy);
+            ctx.closePath();
+            ctx.fill();
+
+            // Highlight on top-left edges
+            ctx.strokeStyle = 'rgba(180, 180, 180, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - diamondSize, cy);
+            ctx.lineTo(cx, cy - diamondSize);
+            ctx.lineTo(cx + diamondSize, cy);
+            ctx.stroke();
+
+            // Shadow on bottom-right edges
+            ctx.strokeStyle = 'rgba(40, 40, 40, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(cx + diamondSize, cy);
+            ctx.lineTo(cx, cy + diamondSize);
+            ctx.lineTo(cx - diamondSize, cy);
+            ctx.stroke();
+        }
+    }
+
+    // Surface scratches
+    for (let i = 0; i < 15; i++) {
+        ctx.strokeStyle = `rgba(${randInt(100, 160)}, ${randInt(100, 160)}, ${randInt(100, 160)}, ${rand(0.1, 0.25)})`;
+        ctx.lineWidth = rand(0.3, 1);
+        ctx.beginPath();
+        const sx = rand(0, w);
+        const sy = rand(0, h);
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx + rand(-30, 30), sy + rand(-30, 30));
+        ctx.stroke();
+    }
+
+    // Fine noise for metallic grain
+    for (let i = 0; i < 800; i++) {
+        const nx = rand(0, w);
+        const ny = rand(0, h);
+        const val = randInt(80, 130);
+        ctx.fillStyle = `rgba(${val}, ${val}, ${val}, ${rand(0.04, 0.1)})`;
+        ctx.fillRect(nx, ny, 1, 1);
+    }
+}
+
+// --- Ramp texture: anti-slip tread with ridges ---
+function drawRampTexture(ctx, w, h) {
+    // Dark gray base
+    ctx.fillStyle = '#5a5a5a';
+    ctx.fillRect(0, 0, w, h);
+
+    // Horizontal ridges/grooves across the surface
+    const ridgeSpacing = 8;
+    const ridgeHeight = 3;
+
+    for (let y = 0; y < h; y += ridgeSpacing) {
+        // Ridge top (lighter)
+        ctx.fillStyle = 'rgba(120, 120, 120, 0.4)';
+        ctx.fillRect(0, y, w, ridgeHeight);
+
+        // Ridge highlight edge
+        ctx.fillStyle = 'rgba(150, 150, 150, 0.3)';
+        ctx.fillRect(0, y, w, 1);
+
+        // Ridge shadow edge
+        ctx.fillStyle = 'rgba(30, 30, 30, 0.35)';
+        ctx.fillRect(0, y + ridgeHeight, w, 1);
+    }
+
+    // Cross-hatched anti-slip pattern overlay
+    ctx.strokeStyle = 'rgba(90, 90, 90, 0.25)';
+    ctx.lineWidth = 1.5;
+    const hatchSpacing = 12;
+    // Diagonal lines one direction
+    for (let i = -h; i < w + h; i += hatchSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + h, h);
+        ctx.stroke();
+    }
+    // Diagonal lines other direction
+    for (let i = -h; i < w + h; i += hatchSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(i, h);
+        ctx.lineTo(i + h, 0);
+        ctx.stroke();
+    }
+
+    // Subtle wear marks
+    for (let i = 0; i < 10; i++) {
+        const wx = rand(0, w);
+        const wy = rand(0, h);
+        const gradient = ctx.createRadialGradient(wx, wy, 0, wx, wy, rand(8, 25));
+        gradient.addColorStop(0, 'rgba(80, 80, 80, 0.2)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    // Fine noise
+    for (let i = 0; i < 600; i++) {
+        const nx = rand(0, w);
+        const ny = rand(0, h);
+        const val = randInt(50, 100);
+        ctx.fillStyle = `rgba(${val}, ${val}, ${val}, ${rand(0.05, 0.12)})`;
+        ctx.fillRect(nx, ny, 1, 1);
+    }
+}
+
+// --- Sandbag texture: burlap weave ---
+function drawSandbagTexture(ctx, w, h) {
+    // Tan base
+    ctx.fillStyle = '#c2b280';
+    ctx.fillRect(0, 0, w, h);
+
+    // Subtle color variation patches
+    for (let i = 0; i < 15; i++) {
+        const px = rand(0, w);
+        const py = rand(0, h);
+        const gradient = ctx.createRadialGradient(px, py, 0, px, py, rand(10, 30));
+        gradient.addColorStop(0, `rgba(${randInt(170, 210)}, ${randInt(155, 195)}, ${randInt(100, 140)}, 0.2)`);
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    // Horizontal weave lines
+    const weaveSpacing = 4;
+    ctx.lineWidth = 1;
+    for (let y = 0; y < h; y += weaveSpacing) {
+        ctx.strokeStyle = `rgba(${randInt(140, 170)}, ${randInt(125, 155)}, ${randInt(80, 110)}, ${rand(0.3, 0.5)})`;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        // Slightly wavy line
+        for (let x = 0; x < w; x += 8) {
+            ctx.lineTo(x, y + rand(-0.5, 0.5));
+        }
+        ctx.stroke();
+    }
+
+    // Vertical weave lines
+    for (let x = 0; x < w; x += weaveSpacing) {
+        ctx.strokeStyle = `rgba(${randInt(140, 170)}, ${randInt(125, 155)}, ${randInt(80, 110)}, ${rand(0.3, 0.5)})`;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        for (let y = 0; y < h; y += 8) {
+            ctx.lineTo(x + rand(-0.5, 0.5), y);
+        }
+        ctx.stroke();
+    }
+
+    // Crosshatch intersections (slightly darker at crossings)
+    for (let y = 0; y < h; y += weaveSpacing) {
+        for (let x = 0; x < w; x += weaveSpacing) {
+            ctx.fillStyle = `rgba(${randInt(120, 150)}, ${randInt(110, 140)}, ${randInt(70, 100)}, ${rand(0.08, 0.18)})`;
+            ctx.fillRect(x - 1, y - 1, 2, 2);
+        }
+    }
+
+    // Fine noise for fabric texture
+    for (let i = 0; i < 400; i++) {
+        const nx = rand(0, w);
+        const ny = rand(0, h);
+        ctx.fillStyle = `rgba(${randInt(100, 160)}, ${randInt(90, 140)}, ${randInt(60, 100)}, ${rand(0.05, 0.15)})`;
+        ctx.fillRect(nx, ny, 1, 1);
+    }
+}
+
+// ---- Generate textures and build material palette ----
+const TEXTURES = {
+    ground:   createCanvasTexture(512, 512, drawGroundTexture, 16, 16),
+    building: createCanvasTexture(256, 256, drawBuildingTexture, 4, 4),
+    wall:     createCanvasTexture(256, 256, drawWallTexture, 2, 2),
+    crate:    createCanvasTexture(256, 256, drawCrateTexture, 1, 1),
+    platform: createCanvasTexture(256, 256, drawPlatformTexture, 3, 3),
+    ramp:     createCanvasTexture(256, 256, drawRampTexture, 2, 2),
+    sandbag:  createCanvasTexture(128, 128, drawSandbagTexture, 2, 2),
+};
+
+// Material palette (now with procedural canvas textures)
 const MATERIALS = {
-    ground: new THREE.MeshStandardMaterial({ color: 0x4a5d23, roughness: 0.9, metalness: 0.0 }),
-    building: new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.8, metalness: 0.1 }),
-    wall: new THREE.MeshStandardMaterial({ color: 0xa0522d, roughness: 0.85, metalness: 0.05 }),
-    crate: new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9, metalness: 0.0 }),
-    platform: new THREE.MeshStandardMaterial({ color: 0x696969, roughness: 0.7, metalness: 0.2 }),
-    ramp: new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.75, metalness: 0.15 }),
-    sandbag: new THREE.MeshStandardMaterial({ color: 0xc2b280, roughness: 0.95, metalness: 0.0 }),
+    ground:   new THREE.MeshStandardMaterial({ map: TEXTURES.ground,   roughness: 0.9,  metalness: 0.0  }),
+    building: new THREE.MeshStandardMaterial({ map: TEXTURES.building, roughness: 0.8,  metalness: 0.1  }),
+    wall:     new THREE.MeshStandardMaterial({ map: TEXTURES.wall,     roughness: 0.85, metalness: 0.05 }),
+    crate:    new THREE.MeshStandardMaterial({ map: TEXTURES.crate,    roughness: 0.9,  metalness: 0.0  }),
+    platform: new THREE.MeshStandardMaterial({ map: TEXTURES.platform, roughness: 0.7,  metalness: 0.2  }),
+    ramp:     new THREE.MeshStandardMaterial({ map: TEXTURES.ramp,     roughness: 0.75, metalness: 0.15 }),
+    sandbag:  new THREE.MeshStandardMaterial({ map: TEXTURES.sandbag,  roughness: 0.95, metalness: 0.0  }),
 };
 
 export class MapBuilder {

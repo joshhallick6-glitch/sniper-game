@@ -143,7 +143,7 @@ export class WeaponSystem {
             const recovery = RECOIL_RECOVERY_SPEED * delta;
             this.recoilOffset = Math.max(0, this.recoilOffset - recovery);
             // Gradually return camera pitch
-            this.camera.rotation.x += recovery * 0.5;
+            this.camera.rotation.x -= recovery;
         }
 
         // ---- Check if player wants to shoot ----
